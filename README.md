@@ -1,5 +1,15 @@
 # Statusline para Claude Code estilo Codex
 
+## IMPORTANTE: primero ejecuta `/statusline` en Claude Code
+
+Antes de instalar esta statusline, abri Claude Code y ejecuta el comando nativo:
+
+```text
+/statusline
+```
+
+Ese paso prepara la configuracion y las dependencias que Claude Code necesita para usar statuslines personalizadas. Despues de hacerlo, segui con esta guia.
+
 Este repo contiene una guia para configurar una statusline de Claude Code con informacion parecida a la de Codex: modelo, esfuerzo, limites de uso, contexto disponible, directorio actual y rama de git.
 
 El objetivo es tener una linea de estado util mientras trabajas, sin abrir comandos extra para saber cuanto margen queda.
