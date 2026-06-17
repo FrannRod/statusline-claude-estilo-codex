@@ -65,3 +65,7 @@ Para instalaciones hechas antes de la fecha del parche. Las instalaciones nuevas
 
 - `README.md`: explicacion humana del proyecto.
 - `statusline-claude-estilo-codex.md`: guia tecnica detallada, pensada para que una IA pueda ejecutar o adaptar la instalacion.
+
+## Ver también
+
+- [notificaciones-claude-codex](https://github.com/FrannRod/notificaciones-claude-codex): avisos de escritorio cuando Claude Code o Codex terminan un turno, piden permiso o esperan input.
