@@ -51,7 +51,15 @@ Ese documento esta escrito como una receta operativa para agentes: explica de do
 
 Si preferis hacerlo manualmente, podes seguir el mismo Markdown paso a paso.
 
+## Ya lo tenias instalado de antes?
+
+Si instalaste esta statusline antes del 2026-06-17 y notas que los limites `5h` / `weekly`
+quedan clavados en un valor viejo que no coincide con `/usage`, aplica el parche del lock
+huerfano: [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md). Las instalaciones nuevas
+(siguiendo el Markdown de esta guia) ya vienen con el arreglo incluido.
+
 ## Contenido
 
 - `README.md`: explicacion humana del proyecto.
 - `statusline-claude-estilo-codex.md`: guia tecnica detallada, pensada para que una IA pueda ejecutar o adaptar la instalacion.
+- `PARCHE-lock-huerfano.md`: parche para instalaciones previas al 2026-06-17 (lock huerfano que congela el cache de uso).

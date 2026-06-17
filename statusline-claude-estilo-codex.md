@@ -84,6 +84,12 @@ TTL=60   # segundos de validez del cache
 
 # ---------- helper: refrescar el cache de uso en segundo plano ----------
 refresh_usage() {
+  # limpiar lock huérfano: si un refresh anterior murió sin liberarlo (corte de red,
+  # terminal matada, timeout), el directorio queda para siempre y congela el cache.
+  if [[ -d "$LOCK" ]]; then
+    lock_age=$(( $(date +%s) - $(stat -c %Y "$LOCK" 2>/dev/null || echo 0) ))
+    (( lock_age > 30 )) && rmdir "$LOCK" 2>/dev/null
+  fi
   mkdir "$LOCK" 2>/dev/null || return 0   # lock atómico contra fetches simultáneos
   (
     tok=$(jq -r '.claudeAiOauth.accessToken // empty' "$CRED" 2>/dev/null)
@@ -265,4 +271,5 @@ Luego abrí (o reiniciá) Claude Code y la statusline aparece sola.
 | No aparece `Context` | El transcript aún no tiene `usage` (sesión recién iniciada) |
 | Statusline vacía | Falta `jq`; instalalo con `sudo apt install jq` |
 | Tarda en cada render | El refresco corre en background; si persiste, revisá conectividad a `api.anthropic.com` |
+| `5h` / `weekly` clavados en un valor viejo (no coinciden con `/usage`) | Lock huérfano: un refresh anterior murió sin liberar `~/.claude/.usage-cache.lock` y congeló el cache. Solución inmediata: `rmdir ~/.claude/.usage-cache.lock`. Para que no vuelva a pasar, aplicá el parche de [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md) |
 ```
