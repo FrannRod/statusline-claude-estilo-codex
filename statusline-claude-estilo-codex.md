@@ -271,5 +271,5 @@ Luego abrí (o reiniciá) Claude Code y la statusline aparece sola.
 | No aparece `Context` | El transcript aún no tiene `usage` (sesión recién iniciada) |
 | Statusline vacía | Falta `jq`; instalalo con `sudo apt install jq` |
 | Tarda en cada render | El refresco corre en background; si persiste, revisá conectividad a `api.anthropic.com` |
-| `5h` / `weekly` clavados en un valor viejo (no coinciden con `/usage`) | Lock huérfano: un refresh anterior murió sin liberar `~/.claude/.usage-cache.lock` y congeló el cache. Solución inmediata: `rmdir ~/.claude/.usage-cache.lock`. Para que no vuelva a pasar, aplicá el parche de [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md) |
+| `5h` / `weekly` clavados en un valor viejo (no coinciden con `/usage`) | Lock huérfano: un refresh anterior murió sin liberar `~/.claude/.usage-cache.lock`. El script lo autorrepara solo (limpia locks de más de 30 s); si querés destrabarlo al instante: `rmdir ~/.claude/.usage-cache.lock` |
 ```

@@ -18,6 +18,8 @@ El objetivo es tener una linea de estado util mientras trabajas, sin abrir coman
 
 Un ejemplo de salida:
 
+![Ejemplo de la statusline](./statusline.png)
+
 ```text
 Ready · Opus 4.8 high · 5h 49% left · weekly 78% left · Context 96% left · ~ · main
 ```
@@ -51,15 +53,15 @@ Ese documento esta escrito como una receta operativa para agentes: explica de do
 
 Si preferis hacerlo manualmente, podes seguir el mismo Markdown paso a paso.
 
-## Ya lo tenias instalado de antes?
+## Parches
 
-Si instalaste esta statusline antes del 2026-06-17 y notas que los limites `5h` / `weekly`
-quedan clavados en un valor viejo que no coincide con `/usage`, aplica el parche del lock
-huerfano: [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md). Las instalaciones nuevas
-(siguiendo el Markdown de esta guia) ya vienen con el arreglo incluido.
+Para instalaciones hechas antes de la fecha del parche. Las instalaciones nuevas ya vienen con todo aplicado.
+
+| Fecha | Archivo |
+|-------|---------|
+| 2026-06-17 | [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md) |
 
 ## Contenido
 
 - `README.md`: explicacion humana del proyecto.
 - `statusline-claude-estilo-codex.md`: guia tecnica detallada, pensada para que una IA pueda ejecutar o adaptar la instalacion.
-- `PARCHE-lock-huerfano.md`: parche para instalaciones previas al 2026-06-17 (lock huerfano que congela el cache de uso).
