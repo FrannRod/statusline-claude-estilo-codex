@@ -61,6 +61,13 @@ La respuesta es del tipo:
 > a terceros. El resultado se cachea 60 s y se refresca en segundo plano para que el
 > render nunca se bloquee ni sature la API.
 
+> **Solo se cachean respuestas buenas.** El endpoint a veces responde con
+> `rate_limit_error` (que también es JSON válido); el script lo detecta y **no** lo guarda,
+> así nunca pisa el último dato bueno. Mientras el endpoint te limite, aplica backoff
+> exponencial entre reintentos (1m → 2m → 4m → 8m → 15m tope, se resetea al primer éxito)
+> y la statusline lo aclara: con dato bueno muestra `... rate-limited, retry Xm`; sin dato,
+> `5h rate-limited (retry Xm)`.
+
 > **Ventana de contexto:** el script asume 1M de tokens si el modelo contiene `1m`
 > (p. ej. `opus[1m]`), si no 200k. Ajustá la variable `window` si usás otra config.
 
@@ -74,15 +81,33 @@ Guardá esto como `~/.claude/statusline-command.sh`:
 #!/bin/bash
 # Statusline estilo Codex para Claude Code.
 #   Ready · <Modelo> <esfuerzo> · 5h XX% left · weekly XX% left · Context XX% left · <dir> · <rama>
+#
+# Los rate limits (5h / semanal) se obtienen del endpoint OAuth de Anthropic
+# usando el accessToken de ~/.claude/.credentials.json. El resultado se cachea
+# y se refresca en segundo plano para no bloquear el render ni saturar la API.
 
 input=$(cat)
 
 CRED="$HOME/.claude/.credentials.json"
-CACHE="$HOME/.claude/.usage-cache.json"
+CACHE="$HOME/.claude/.usage-cache.json"   # solo guarda respuestas BUENAS (con five_hour)
+ATTEMPT="$HOME/.claude/.usage-attempt"    # marca de último intento (para throttlear reintentos)
+BACKOFF="$HOME/.claude/.usage-backoff"    # intervalo de reintento actual (segundos)
+RLMARK="$HOME/.claude/.usage-ratelimited" # existe mientras el endpoint nos rate-limitee
 LOCK="$HOME/.claude/.usage-cache.lock"
-TTL=60   # segundos de validez del cache
+TTL=60          # frescura deseada del cache bueno
+RETRY_BASE=60   # intervalo base entre intentos sin dato bueno
+RETRY_MAX=900   # tope del backoff (15 min)
+
+# intervalo de reintento vigente: arranca en BASE y se duplica con cada rate-limit
+RETRY=$(cat "$BACKOFF" 2>/dev/null)
+[[ "$RETRY" =~ ^[0-9]+$ ]] || RETRY=$RETRY_BASE
+
+# formatear segundos como "45s" / "5m"
+fmt_dur() { local s=$1; if (( s >= 60 )); then printf '%dm' $(( s / 60 )); else printf '%ds' "$s"; fi; }
 
 # ---------- helper: refrescar el cache de uso en segundo plano ----------
+# Escribe en $CACHE únicamente si la respuesta trae .five_hour.utilization.
+# Así un error (p. ej. rate_limit_error) nunca pisa el último dato bueno.
 refresh_usage() {
   # limpiar lock huérfano: si un refresh anterior murió sin liberarlo (corte de red,
   # terminal matada, timeout), el directorio queda para siempre y congela el cache.
@@ -92,15 +117,25 @@ refresh_usage() {
   fi
   mkdir "$LOCK" 2>/dev/null || return 0   # lock atómico contra fetches simultáneos
   (
+    touch "$ATTEMPT"   # registrar el intento ANTES de pegarle al endpoint
     tok=$(jq -r '.claudeAiOauth.accessToken // empty' "$CRED" 2>/dev/null)
     if [[ -n "$tok" ]]; then
       curl -s -m 10 \
         -H "Authorization: Bearer $tok" \
         -H "anthropic-beta: oauth-2025-04-20" \
         -H "anthropic-version: 2023-06-01" \
-        "https://api.anthropic.com/api/oauth/usage" -o "$CACHE.tmp" \
-        && jq -e . "$CACHE.tmp" >/dev/null 2>&1 \
-        && mv "$CACHE.tmp" "$CACHE"
+        "https://api.anthropic.com/api/oauth/usage" -o "$CACHE.tmp"
+      if jq -e '.five_hour.utilization != null' "$CACHE.tmp" >/dev/null 2>&1; then
+        # éxito: guardar dato bueno y resetear el backoff
+        mv "$CACHE.tmp" "$CACHE"
+        echo "$RETRY_BASE" > "$BACKOFF"
+        rm -f "$RLMARK"
+      elif jq -e '.error.type == "rate_limit_error"' "$CACHE.tmp" >/dev/null 2>&1; then
+        # rate-limit: duplicar el intervalo (con tope) y marcar el estado
+        next=$(( RETRY * 2 )); (( next > RETRY_MAX )) && next=$RETRY_MAX
+        echo "$next" > "$BACKOFF"
+        touch "$RLMARK"
+      fi
       rm -f "$CACHE.tmp"
     fi
     rmdir "$LOCK" 2>/dev/null
@@ -109,19 +144,17 @@ refresh_usage() {
 }
 
 # ---------- decidir si hay que refrescar ----------
+# El cache bueno marca "qué tan viejo es el dato"; ATTEMPT marca "cuándo reintenté".
+# Si no hay dato bueno, throttleamos por ATTEMPT para no quedar en loop golpeando
+# un endpoint rate-limiteado.
 now=$(date +%s)
-if [[ -f "$CACHE" ]]; then
-  mtime=$(stat -c %Y "$CACHE" 2>/dev/null || echo 0)
-  (( now - mtime > TTL )) && refresh_usage
-else
+cache_age=999999
+[[ -f "$CACHE" ]] && cache_age=$(( now - $(stat -c %Y "$CACHE" 2>/dev/null || echo 0) ))
+attempt_age=999999
+[[ -f "$ATTEMPT" ]] && attempt_age=$(( now - $(stat -c %Y "$ATTEMPT" 2>/dev/null || echo 0) ))
+
+if (( cache_age > TTL )) && (( attempt_age > RETRY )); then
   refresh_usage
-  tok=$(jq -r '.claudeAiOauth.accessToken // empty' "$CRED" 2>/dev/null)
-  [[ -n "$tok" ]] && curl -s -m 3 \
-    -H "Authorization: Bearer $tok" \
-    -H "anthropic-beta: oauth-2025-04-20" \
-    -H "anthropic-version: 2023-06-01" \
-    "https://api.anthropic.com/api/oauth/usage" 2>/dev/null \
-    | jq -e . >/dev/null 2>&1 && true
 fi
 
 # ---------- campos del JSON de entrada ----------
@@ -162,6 +195,17 @@ if [[ -f "$CACHE" ]]; then
   if [[ -n "$sd" ]]; then
     sl=$(printf '%.0f' "$(echo "100 - $sd" | bc -l 2>/dev/null || echo "$((100 - ${sd%.*}))")")
     rl_str+="${SEP}$(pct_color "$sl")weekly ${sl}% left${RST}"
+  fi
+fi
+
+# nota de rate-limit: el endpoint nos está limitando, los límites pueden estar
+# desactualizados; aclaramos cada cuánto reintentamos.
+if [[ -f "$RLMARK" ]]; then
+  rt=$(fmt_dur "$RETRY")
+  if [[ -z "$rl_str" ]]; then
+    rl_str="${SEP}${YEL}5h rate-limited${RST}${DIM} (retry ${rt})${RST}"
+  else
+    rl_str+="${SEP}${DIM}rate-limited, retry ${rt}${RST}"
   fi
 fi
 
@@ -272,4 +316,5 @@ Luego abrí (o reiniciá) Claude Code y la statusline aparece sola.
 | Statusline vacía | Falta `jq`; instalalo con `sudo apt install jq` |
 | Tarda en cada render | El refresco corre en background; si persiste, revisá conectividad a `api.anthropic.com` |
 | `5h` / `weekly` clavados en un valor viejo (no coinciden con `/usage`) | Lock huérfano: un refresh anterior murió sin liberar `~/.claude/.usage-cache.lock`. El script lo autorrepara solo (limpia locks de más de 30 s); si querés destrabarlo al instante: `rmdir ~/.claude/.usage-cache.lock` |
+| Aparece `rate-limited` y no los porcentajes | El endpoint `/api/oauth/usage` te está limitando. Es esperado: el script aplica backoff y se recupera solo al pasar la ventana. Si nunca tuviste datos, esperá unos minutos |
 ```

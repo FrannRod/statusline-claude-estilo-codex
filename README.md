@@ -60,6 +60,7 @@ Para instalaciones hechas antes de la fecha del parche. Las instalaciones nuevas
 | Fecha | Archivo |
 |-------|---------|
 | 2026-06-17 | [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md) |
+| 2026-06-18 | [PARCHE-rate-limit-backoff.md](./PARCHE-rate-limit-backoff.md) |
 
 ## Contenido
 
