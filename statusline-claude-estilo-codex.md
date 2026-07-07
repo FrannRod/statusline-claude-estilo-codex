@@ -5,8 +5,12 @@ que muestra modelo, esfuerzo, **límites de uso 5h / semanal**, contexto restant
 directorio y rama de git:
 
 ```
-Ready · Opus 4.8 high · 5h 49% left · weekly 78% left · Context 96% left · ~ · main
+Ready · Opus 4.8 high · 2.6h 49% · 6.9d 78% · Context 96% left · ~ · main
 ```
+
+El primer par muestra **cuánto falta para el reset** de cada ventana (5h en horas,
+semanal en días, 1 decimal) seguido del **% que te queda**. Así ves de un vistazo el
+restart sin tener que hacer la cuenta.
 
 Los porcentajes cambian de color: verde (≥50%), amarillo (≥20%), rojo (<20%).
 
@@ -184,17 +188,33 @@ pct_color() {
 }
 
 # ---------- rate limits desde el cache ----------
+# En vez de etiquetas fijas ("5h" / "weekly") mostramos cuánto FALTA para el reset
+# (campo resets_at del endpoint): la ventana de 5h en horas y la semanal en días,
+# ambas con 1 decimal, seguido del % restante. Ej: "3.0h 50%  6.5d 96%".
 rl_str=""
 if [[ -f "$CACHE" ]]; then
-  fh=$(jq -r '.five_hour.utilization // empty' "$CACHE" 2>/dev/null)
-  sd=$(jq -r '.seven_day.utilization // empty' "$CACHE" 2>/dev/null)
+  fh=$(jq -r '.five_hour.utilization // empty'  "$CACHE" 2>/dev/null)
+  fh_rst=$(jq -r '.five_hour.resets_at // empty' "$CACHE" 2>/dev/null)
+  sd=$(jq -r '.seven_day.utilization // empty'  "$CACHE" 2>/dev/null)
+  sd_rst=$(jq -r '.seven_day.resets_at // empty' "$CACHE" 2>/dev/null)
+
+  # tiempo restante hasta un reset ISO-8601 → "<n><suf>" con 1 decimal (nunca negativo).
+  # LC_ALL=C en el printf: bc emite el decimal con punto y un locale con coma lo rechaza.
+  #   $1 = ISO timestamp   $2 = divisor (3600=h, 86400=d)   $3 = sufijo   $4 = fallback
+  fmt_left() {
+    local rst; rst=$(date -d "$1" +%s 2>/dev/null) || { printf '%s' "$4"; return; }
+    local n; n=$(LC_ALL=C printf '%.1f' "$(echo "($rst - $now) / $2" | bc -l 2>/dev/null)")
+    [[ "$n" == -* ]] && n="0.0"
+    printf '%s%s' "$n" "$3"
+  }
+
   if [[ -n "$fh" ]]; then
     fl=$(printf '%.0f' "$(echo "100 - $fh" | bc -l 2>/dev/null || echo "$((100 - ${fh%.*}))")")
-    rl_str+="${SEP}$(pct_color "$fl")5h ${fl}% left${RST}"
+    rl_str+="${SEP}$(pct_color "$fl")$(fmt_left "$fh_rst" 3600 h 5h) ${fl}%${RST}"
   fi
   if [[ -n "$sd" ]]; then
     sl=$(printf '%.0f' "$(echo "100 - $sd" | bc -l 2>/dev/null || echo "$((100 - ${sd%.*}))")")
-    rl_str+="${SEP}$(pct_color "$sl")weekly ${sl}% left${RST}"
+    rl_str+="${SEP}$(pct_color "$sl")$(fmt_left "$sd_rst" 86400 d weekly) ${sl}%${RST}"
   fi
 fi
 
@@ -298,8 +318,9 @@ Luego abrí (o reiniciá) Claude Code y la statusline aparece sola.
 
 - **Quitar un campo:** borrá el fragmento que arma `rl_str`, `ctx_str` o `branch`, y
   sacá la variable correspondiente del `printf` final.
-- **Mostrar cuándo se resetea el límite:** la respuesta trae `five_hour.resets_at` /
-  `seven_day.resets_at` (ISO-8601); podés parsearlo con `date -d`.
+- **Etiquetas de los límites:** por defecto muestran el tiempo hasta el reset
+  (`resets_at`) en horas/días. Si preferís las etiquetas fijas `5h`/`weekly` con hora de
+  reset, ajustá `fmt_left` (usa `date -d` sobre el ISO-8601).
 - **Cambiar colores:** editá los códigos ANSI 256 (`\033[38;5;NNNm`) al principio.
 - **TTL del cache:** variable `TTL` (segundos).
 - **Otra ventana de contexto:** ajustá `window` o la detección de `1m`.

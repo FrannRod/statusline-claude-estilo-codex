@@ -21,8 +21,10 @@ Un ejemplo de salida:
 ![Ejemplo de la statusline](./statusline.png)
 
 ```text
-Ready · Opus 4.8 high · 5h 49% left · weekly 78% left · Context 96% left · ~ · main
+Ready · Opus 4.8 high · 2.6h 49% · 6.9d 78% · Context 96% left · ~ · main
 ```
+
+Los dos primeros valores de uso muestran cuanto falta para el reset de cada ventana (la de 5 horas en horas, la semanal en dias, con 1 decimal) seguido del porcentaje que te queda. Asi ves el restart de un vistazo sin abrir `/usage`.
 
 La statusline cambia colores segun el porcentaje restante: verde cuando hay margen, amarillo cuando conviene prestar atencion y rojo cuando queda poco.
 
@@ -61,6 +63,7 @@ Para instalaciones hechas antes de la fecha del parche. Las instalaciones nuevas
 |-------|---------|
 | 2026-06-17 | [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md) |
 | 2026-06-18 | [PARCHE-rate-limit-backoff.md](./PARCHE-rate-limit-backoff.md) |
+| 2026-07-07 | [PARCHE-tiempo-hasta-reset.md](./PARCHE-tiempo-hasta-reset.md) |
 
 ## Contenido
 
