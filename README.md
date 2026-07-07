@@ -18,7 +18,7 @@ El objetivo es tener una linea de estado util mientras trabajas, sin abrir coman
 
 Un ejemplo de salida:
 
-![Ejemplo de la statusline](./statusline.png)
+![Ejemplo de la statusline](./statusline.png?v=2)
 
 ```text
 Ready · Opus 4.8 high · 2.6h 49% · 6.9d 78% · Context 96% left · ~ · main
