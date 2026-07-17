@@ -59,16 +59,11 @@ Ese documento esta escrito como una receta operativa para agentes: explica de do
 
 Si preferis hacerlo manualmente, podes seguir el mismo Markdown paso a paso.
 
-## Parches
+## Actualizar una instalacion existente
 
-Para instalaciones hechas antes de la fecha del parche. Las instalaciones nuevas ya vienen con todo aplicado.
+No hay parches sueltos que aplicar a mano. La guia [statusline-claude-estilo-codex.md](./statusline-claude-estilo-codex.md) siempre tiene la ultima version del script, y al final trae un changelog que explica en una o dos oraciones el porque de cada cambio.
 
-| Fecha | Archivo |
-|-------|---------|
-| 2026-06-17 | [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md) |
-| 2026-06-18 | [PARCHE-rate-limit-backoff.md](./PARCHE-rate-limit-backoff.md) (reemplazado por el de 2026-07-17) |
-| 2026-07-07 | [PARCHE-tiempo-hasta-reset.md](./PARCHE-tiempo-hasta-reset.md) |
-| 2026-07-17 | [PARCHE-rate-limit-retry-after.md](./PARCHE-rate-limit-retry-after.md) |
+Para poner al dia una instalacion vieja, pasale a una IA tu `~/.claude/statusline-command.sh` actual junto con esa guia y pedile que lo actualice: va a comparar tu script con el ultimo, aplicar las diferencias y preservar tus personalizaciones, usando el changelog para entender la intencion de cada cambio.
 
 ## Contenido
 

@@ -415,4 +415,41 @@ Luego abrí (o reiniciá) Claude Code y la statusline aparece sola.
 | `5h` / `weekly` clavados en un valor viejo (no coinciden con `/usage`) | Lock huérfano: un refresh anterior murió sin liberar `~/.claude/.usage-cache.lock`. El script lo autorrepara solo (limpia locks de más de 30 s); si querés destrabarlo al instante: `rmdir ~/.claude/.usage-cache.lock` |
 | Aparece `rate-limited` y no los porcentajes | El endpoint `/api/oauth/usage` te está limitando. Es esperado: el script respeta el `retry-after` que manda el server y no vuelve a consultar hasta que pase (la nota muestra cuánto falta). Se recupera solo. **No fuerces reintentos** (borrar `~/.claude/.usage-retry-at` a mano y pegarle de nuevo): el endpoint escala el castigo si insistís (de ~14 min a 1 hora) |
 | Los porcentajes desaparecen pero el dato no es viejo | Puede ser un ban largo heredado: mirá `~/.claude/.usage-retry-at` (epoch hasta el que espera). Si ya pasó y sigue sin datos, esperá un ciclo de refresh (TTL) |
-```
+
+---
+
+## 8. Actualizar una instalación existente
+
+Si ya tenés un `~/.claude/statusline-command.sh` de una versión anterior, **no hay parches
+que aplicar a mano**. Esta guía siempre trae la última versión del script (sección 3) y el
+Changelog de abajo explica el *porqué* de cada cambio. Para ponerte al día, pasale a una IA
+tu script actual + esta guía y pedile que lo actualice. La IA debería:
+
+1. Comparar tu script con el bloque `bash` de la sección 3 (la última versión).
+2. Aplicar las diferencias, **preservando tus personalizaciones** (colores, `window`, `TTL`,
+   `AUTO_FETCH`, campos que hayas sacado, etc.).
+3. Usar el Changelog para entender la intención de cada cambio y no romper nada.
+
+El *cómo* (el diff) la IA lo deduce comparando; lo único que no es derivable —el *por qué*—
+está en el Changelog.
+
+## 9. Changelog
+
+Sólo el *por qué* de cada cambio, una o dos oraciones. El *cómo* vive en el script de la
+sección 3, que siempre refleja la última versión.
+
+- **2026-07-17 — Rate-limit real y datos frescos.** Ante un `rate_limit_error` se respeta el
+  `retry-after` exacto del server en vez de adivinar un backoff: el endpoint escala el castigo
+  si se lo martilla (medido: ~14 min → 1 h) y reintentar dentro del ban lo empeora. Además: no
+  se muestran datos de más de 15 min, `fmt_left` auto-escala a d/h/m y evita el falso `0.0h`,
+  kill-switch `AUTO_FETCH` para cortar el tráfico, y log multi-sesión en
+  `~/.claude/.usage-statusline.log`.
+- **2026-07-07 — Tiempo hasta el reset.** Las etiquetas de uso muestran cuánto falta para el
+  reset de cada ventana (campo `resets_at`) en vez de labels fijas, para ver el restart de un
+  vistazo sin abrir `/usage`.
+- **2026-06-18 — Cache sólo con respuestas buenas.** El endpoint a veces responde
+  `rate_limit_error` (JSON válido) y eso envenenaba el cache, dejando la statusline sin
+  límites; ahora sólo se cachean respuestas con datos reales.
+- **2026-06-17 — Auto-reparación de lock huérfano.** Si un refresh en background muere sin
+  liberar el lock (corte de red, timeout, terminal matada), el cache quedaba congelado para
+  siempre; ahora un lock de más de 30 s se limpia solo en el próximo render.
