@@ -1,5 +1,15 @@
 # Parche: rate-limit del endpoint de uso (cache envenenado + backoff)
 
+> **⚠️ Reemplazado (2026-07-17).** El backoff exponencial que describe este parche quedó
+> superado: medimos que `/api/oauth/usage` **escala el castigo** si reintentás dentro de un
+> ban (~14 min → 1 hora), así que adivinar el intervalo de reintento es contraproducente.
+> El script actual **respeta el `retry-after` exacto del server** (guarda el deadline en
+> `~/.claude/.usage-retry-at` y no consulta hasta que pase) y **no muestra datos de más de
+> 15 min**. Si querés la versión al día, copiá el script completo de
+> [statusline-claude-estilo-codex.md](./statusline-claude-estilo-codex.md), que ya lo trae.
+> Este documento se conserva sólo como referencia histórica (el bug del cache envenenado que
+> explica sigue siendo válido y está resuelto en el script nuevo).
+
 ## Cuándo aplicarlo
 
 Aplicá este parche si **instalaste la statusline antes del 2026-06-18**, es decir, si tu

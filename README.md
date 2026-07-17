@@ -36,6 +36,10 @@ La statusline cambia colores segun el porcentaje restante: verde cuando hay marg
 - Calcula el contexto restante a partir del ultimo `usage` del transcript.
 - Muestra la rama de git del proyecto actual.
 - Cachea la consulta de uso para que la statusline no sea lenta ni consulte la API en cada render.
+- Si la API limita la consulta de uso, respeta el tiempo de espera que devuelve el server y no reintenta antes; asi evita que el limite escale.
+- No muestra datos de uso de mas de 15 minutos; prefiere no mostrar nada antes que un numero viejo.
+- Permite apagar por completo la consulta de uso con un interruptor en el script.
+- Registra su actividad en un log local, seguro para varias sesiones a la vez: se manda un solo request aunque tengas muchas terminales abiertas.
 
 ## Privacidad
 
@@ -62,8 +66,9 @@ Para instalaciones hechas antes de la fecha del parche. Las instalaciones nuevas
 | Fecha | Archivo |
 |-------|---------|
 | 2026-06-17 | [PARCHE-lock-huerfano.md](./PARCHE-lock-huerfano.md) |
-| 2026-06-18 | [PARCHE-rate-limit-backoff.md](./PARCHE-rate-limit-backoff.md) |
+| 2026-06-18 | [PARCHE-rate-limit-backoff.md](./PARCHE-rate-limit-backoff.md) (reemplazado por el de 2026-07-17) |
 | 2026-07-07 | [PARCHE-tiempo-hasta-reset.md](./PARCHE-tiempo-hasta-reset.md) |
+| 2026-07-17 | [PARCHE-rate-limit-retry-after.md](./PARCHE-rate-limit-retry-after.md) |
 
 ## Contenido
 
