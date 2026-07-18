@@ -90,6 +90,7 @@ La respuesta es del tipo:
 Guardá esto como `~/.claude/statusline-command.sh`:
 
 ```bash
+# statusline-claude-estilo-codex · v2026-07-17 · https://github.com/FrannRod/statusline-claude-estilo-codex
 #!/bin/bash
 # Statusline estilo Codex para Claude Code.
 #   Ready · <Modelo> <esfuerzo> · 5h XX% left · weekly XX% left · Context XX% left · <dir> · <rama>
@@ -423,12 +424,25 @@ Luego abrí (o reiniciá) Claude Code y la statusline aparece sola.
 Si ya tenés un `~/.claude/statusline-command.sh` de una versión anterior, **no hay parches
 que aplicar a mano**. Esta guía siempre trae la última versión del script (sección 3) y el
 Changelog de abajo explica el *porqué* de cada cambio. Para ponerte al día, pasale a una IA
-tu script actual + esta guía y pedile que lo actualice. La IA debería:
+tu script actual + esta guía y pedile que lo actualice.
 
-1. Comparar tu script con el bloque `bash` de la sección 3 (la última versión).
-2. Aplicar las diferencias, **preservando tus personalizaciones** (colores, `window`, `TTL`,
+La **primera línea del script** trae la versión (una fecha) y la URL de este repo, justo para
+esto: con `head -1 ~/.claude/statusline-command.sh` la IA sabe qué versión tenés instalada y
+de dónde bajar la última.
+
+```bash
+head -1 ~/.claude/statusline-command.sh
+# statusline-claude-estilo-codex · v2026-07-17 · https://github.com/FrannRod/statusline-claude-estilo-codex
+```
+
+La IA debería:
+
+1. Leer la versión de la primera línea de tu script y compararla con la última entrada del
+   Changelog (ambas son fechas).
+2. Comparar tu script con el bloque `bash` de la sección 3 (la última versión).
+3. Aplicar las diferencias, **preservando tus personalizaciones** (colores, `window`, `TTL`,
    `AUTO_FETCH`, campos que hayas sacado, etc.).
-3. Usar el Changelog para entender la intención de cada cambio y no romper nada.
+4. Dejar en la primera línea la fecha del último cambio del Changelog (la versión nueva).
 
 El *cómo* (el diff) la IA lo deduce comparando; lo único que no es derivable —el *por qué*—
 está en el Changelog.
